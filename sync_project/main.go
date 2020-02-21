@@ -5,22 +5,37 @@ import (
 	"database/sql"
 	"strconv"
 	"os/exec"
+	"os"
 	"log"
+	"io/ioutil"
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func hash() {
+func hash() []byte {
 	cmd := "find testsrc -ls | sort | sha1sum"
     cmdOutput, err := exec.Command("bash", "-c", cmd).Output()
     if err != nil {
         log.Fatal(err)
-    }
-    fmt.Printf("%s", cmdOutput)
-
-}
+    	}
+	return cmdOutput
+	}
+func walkDir() []os.FileInfo {
+	files, err := ioutil.ReadDir(".")
+	if err != nil {
+    log.Fatal(err)
+	}
+	for _, f := range files {
+		fmt.Println(f.Name())
+		}
+	return files
+	}
+	
 
 func main() {
-	hash()
+	cmdOutput := hash()
+	files := walkDir()
+	fmt.Println(files)
+	fmt.Printf("%s", cmdOutput)
 	database, _ := 
 		sql.Open("sqlite3", "./bogo.db")
 	statement, _ := 
