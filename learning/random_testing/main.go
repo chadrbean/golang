@@ -4,10 +4,23 @@ import (
 	"fmt"
 	"database/sql"
 	"strconv"
+	"os/exec"
+	"log"
 	_ "github.com/mattn/go-sqlite3"
 )
 
+func hash() {
+	cmd := "find testsrc -ls | sort | sha1sum"
+    cmdOutput, err := exec.Command("bash", "-c", cmd).Output()
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("%s", cmdOutput)
+
+}
+
 func main() {
+	hash()
 	database, _ := 
 		sql.Open("sqlite3", "./bogo.db")
 	statement, _ := 
