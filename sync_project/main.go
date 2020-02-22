@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 	"database/sql"
 	"strconv"
 	"os/exec"
@@ -12,7 +13,7 @@ import (
 )
 
 func hash() []byte {
-	cmd := "find testsrc -ls | sort | sha1sum"
+	cmd := "find . -ls | sort | sha1sum"
     cmdOutput, err := exec.Command("bash", "-c", cmd).Output()
     if err != nil {
         log.Fatal(err)
@@ -22,20 +23,24 @@ func hash() []byte {
 func walkDir() []os.FileInfo {
 	files, err := ioutil.ReadDir(".")
 	if err != nil {
-    log.Fatal(err)
-	}
-	for _, f := range files {
-		fmt.Println(f.Name())
+    	log.Fatal(err)
 		}
 	return files
 	}
-	
-
+func bytesToString(data []byte) string {
+	return string(data[:])
+	}
 func main() {
 	cmdOutput := hash()
 	files := walkDir()
-	fmt.Println(files)
-	fmt.Printf("%s", cmdOutput)
+	for _, f := range files {
+		fmt.Println(f.Name())
+		}
+	hashString := bytesToString(cmdOutput)
+	hashStrip := strings.Fields(hashString)[0]
+
+	fmt.Println(hashStrip)
+
 	database, _ := 
 		sql.Open("sqlite3", "./bogo.db")
 	statement, _ := 
