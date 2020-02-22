@@ -12,8 +12,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func hash() []byte {
-	cmd := "find . -ls | sort | sha1sum"
+func hash(dir string) []byte{
+	cmd := "find " + string(dir[:]) + " -ls | sort | sha1sum"
     cmdOutput, err := exec.Command("bash", "-c", cmd).Output()
     if err != nil {
         log.Fatal(err)
@@ -31,12 +31,17 @@ func bytesToString(data []byte) string {
 	return string(data[:])
 	}
 func main() {
-	cmdOutput := hash()
+	srcdir := "src"
+	dstdir := "dst"
+	// srchash := hash(srcdir)
+	dsthash := hash(dstdir)
+	fmt.Printf("%s %s", srcdir, dstdir)
+	
 	files := walkDir()
 	for _, f := range files {
 		fmt.Println(f.Name())
 		}
-	hashString := bytesToString(cmdOutput)
+	hashString := bytesToString(dsthash)
 	hashStrip := strings.Fields(hashString)[0]
 
 	fmt.Println(hashStrip)
