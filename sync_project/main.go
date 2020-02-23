@@ -12,42 +12,33 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func hash(dir string) []byte{
-	cmd := "find " + string(dir[:]) + " -ls | sort | sha1sum"
+func bytesToString(data []byte) string {
+	return string(data[:])
+	}
+
+
+func hash(dir string) string{
+	cmd := "find " + string(dir[:]) + " -type f -execdir ls -alh --time-style='+' '{}' ';' | sort "
     cmdOutput, err := exec.Command("bash", "-c", cmd).Output()
     if err != nil {
         log.Fatal(err)
-    	}
-	return cmdOutput
+		}
+	hashString := bytesToString(cmdOutput)
+	hashStrip := strings.Fields(hashString)[0]
+	return hashStrip
 	}
-func walkDir() []os.FileInfo {
-	files, err := ioutil.ReadDir(".")
+
+func walkDir(dir string) []os.FileInfo {
+	files, err := ioutil.ReadDir(dir)
 	if err != nil {
     	log.Fatal(err)
 		}
 	return files
 	}
-func bytesToString(data []byte) string {
-	return string(data[:])
-	}
-func main() {
-	srcdir := "src"
-	dstdir := "dst"
-	// srchash := hash(srcdir)
-	dsthash := hash(dstdir)
-	fmt.Printf("%s %s", srcdir, dstdir)
-	
-	files := walkDir()
-	for _, f := range files {
-		fmt.Println(f.Name())
-		}
-	hashString := bytesToString(dsthash)
-	hashStrip := strings.Fields(hashString)[0]
 
-	fmt.Println(hashStrip)
-
+func database() {
 	database, _ := 
-		sql.Open("sqlite3", "./bogo.db")
+		sql.Open("sqlite3", "./movies.db")
 	statement, _ := 
 		database.Prepare("CREATE TABLE IF NOT EXISTS movies (id INTEGER PRIMARY KEY, movie TEXT, folderHash TEXT, datetime TEXT )")
 	statement.Exec()
@@ -66,4 +57,36 @@ func main() {
         fmt.Println(strconv.Itoa(id) + ": " + movie + " " + folderHash + " " + datetime)
 	}
 	database.Exec("DELETE FROM movies;")
+}
+
+
+func main() {
+	srcdir := "src/"
+	dstdir := "dst/"
+	srchash := hash(srcdir)
+	dsthash := hash(dstdir)
+	
+	
+	// Check and see if source hash matches dest hash and sync if not. Hash can be modified to whatever
+	if srchash == dsthash {
+		srcfileWalk := walkDir(srcdir)
+		dstfileWalk := walkDir(dstdir)
+		for _, f := range srcfileWalk {
+			if f.IsDir() == false {
+			fmt.Println(f.Name(), f.Size())
+			}
+		}
+		for _, f := range dstfileWalk {
+			break
+			fmt.Println(f.Name())
+		
+		}
+	
+		database()
+		fmt.Printf("%s %s", srchash, dsthash)
+	} else {
+		fmt.Println("All Files Are Synced")
+	}
+
+
 }
