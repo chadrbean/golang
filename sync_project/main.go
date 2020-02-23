@@ -9,6 +9,7 @@ import (
 	"os"
 	"log"
 	"io/ioutil"
+	"path/filepath"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -35,6 +36,26 @@ func walkDir(dir string) []os.FileInfo {
 		}
 	return files
 	}
+func walkAllFilesInDir(dir string) error {
+	var files []string
+	return filepath.Walk(dir, func(path string, info os.FileInfo, e error) error {
+		if e != nil {
+			return e
+		}
+
+		// check if it is a regular file (not dir)
+		if info.Mode().IsRegular() {
+			files = append(files, path)
+			for _, file := range files {
+				cmd := "sha1sum " + file
+				fmt.Println(cmd)
+				fileHash, _ := exec.Command("bash", "-c", cmd).Output()
+				fmt.Println(bytesToString(fileHash))
+				}	
+		}
+		return nil
+	})
+}
 
 func database() {
 	database, _ := 
@@ -66,22 +87,9 @@ func main() {
 	srchash := hash(srcdir)
 	dsthash := hash(dstdir)
 	
-	
 	// Check and see if source hash matches dest hash and sync if not. Hash can be modified to whatever
 	if srchash == dsthash {
-		srcfileWalk := walkDir(srcdir)
-		dstfileWalk := walkDir(dstdir)
-		for _, f := range srcfileWalk {
-			if f.IsDir() == false {
-			fmt.Println(f.Name(), f.Size())
-			}
-		}
-		for _, f := range dstfileWalk {
-			break
-			fmt.Println(f.Name())
-		
-		}
-	
+		walkAllFilesInDir(srcdir)
 		database()
 		fmt.Printf("%s %s", srchash, dsthash)
 	} else {
